@@ -21,33 +21,33 @@ describe('techs', function () {
                     items: [{
                         directory: 'fully-block',
                         items: [
-                            { file: 'fully-block' },
+                            { file: 'fully-block.file' },
                             { directory: 'fully-block.dir', items: [] },
                             { directory: '_bool-mod',
                                 items: [
-                                    { file: 'fully-block_bool-mod' },
+                                    { file: 'fully-block_bool-mod.file' },
                                     { directory: 'fully-block_bool-mod.dir', items: [] }
                                 ]
                             },
                             { directory: '_modName',
                                 items: [
-                                    { file: 'fully-block_modName_modVal' },
+                                    { file: 'fully-block_modName_modVal.file' },
                                     { directory: 'fully-block_modName_modVal.dir', items: [] }
                                 ]
                             },
                             { directory: '__elem',
                                 items: [
-                                    { file: 'fully-block__elem' },
+                                    { file: 'fully-block__elem.file' },
                                     { directory: 'fully-block__elem.dir', items: [] },
                                     { directory: '_bool-mod',
                                         items: [
-                                            { file: 'fully-block__elem_bool-mod' },
+                                            { file: 'fully-block__elem_bool-mod.file' },
                                             { directory: 'fully-block__elem_bool-mod.dir', items: [] }
                                         ]
                                     },
                                     { directory: '_modName',
                                         items: [
-                                            { file: 'fully-block__elem_modName_modVal'},
+                                            { file: 'fully-block__elem_modName_modVal.file'},
                                             { directory: 'fully-block__elem_modName_modVal.dir', items: [] }
                                         ]
                                     }
@@ -61,7 +61,7 @@ describe('techs', function () {
                     items: [{
                         directory: 'block-1',
                         items: [
-                            { file: 'block-1' },
+                            { file: 'block-1.file' },
                             { directory: 'block-1.dir', items: [] }
                         ]
                     }]
@@ -71,7 +71,7 @@ describe('techs', function () {
                     items: [{
                         directory: 'block-1',
                         items: [
-                            { file: 'block-1' },
+                            { file: 'block-1.file' },
                             { directory: 'block-1.dir', items: [] }
                         ]
                     }]
@@ -106,7 +106,7 @@ describe('techs', function () {
                 .then(function (levels) {
                     var name = 'fully-block';
                     var file = levels.getBlockFiles('fully-block')[0];
-                    var filename = path.join(fullyBlockDirname, name);
+                    var filename = path.join(fullyBlockDirname, name + '.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -130,7 +130,7 @@ describe('techs', function () {
                 .then(function (levels) {
                     var name = 'fully-block_bool-mod';
                     var file = levels.getBlockFiles('fully-block', 'bool-mod', true)[0];
-                    var filename = path.join(fullyBlockDirname, '_bool-mod', name);
+                    var filename = path.join(fullyBlockDirname, '_bool-mod', name + '.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -154,7 +154,7 @@ describe('techs', function () {
                 .then(function (levels) {
                     var name = 'fully-block_modName_modVal';
                     var file = levels.getBlockFiles('fully-block', 'modName', 'modVal')[0];
-                    var filename = path.join(fullyBlockDirname, '_modName', name);
+                    var filename = path.join(fullyBlockDirname, '_modName', name + '.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -178,7 +178,7 @@ describe('techs', function () {
                 .then(function (levels) {
                     var name = 'fully-block__elem';
                     var file = levels.getElemFiles('fully-block', 'elem')[0];
-                    var filename = path.join(fullyBlockDirname, '__elem', name);
+                    var filename = path.join(fullyBlockDirname, '__elem', name + '.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -202,14 +202,14 @@ describe('techs', function () {
                 .then(function (levels) {
                     var name = 'fully-block__elem_bool-mod';
                     var file = levels.getElemFiles('fully-block', 'elem', 'bool-mod', true)[0];
-                    var filename = path.join(fullyBlockDirname, '__elem', '_bool-mod', name);
+                    var filename = path.join(fullyBlockDirname, '__elem', '_bool-mod', name + '.file');
 
                     file.fullname.must.be(filename);
                 })
                 .then(done, done);
         });
 
-        it('must detect boolean mod file of elem in level', function (done) {
+        it('must detect boolean mod dir of elem in level', function (done) {
             bundle.runTech(LevelsTech, { levels: [blocksDirname] })
                 .then(function (levels) {
                     var name = 'fully-block__elem_bool-mod';
@@ -226,14 +226,14 @@ describe('techs', function () {
                 .then(function (levels) {
                     var name = 'fully-block__elem_modName_modVal';
                     var file = levels.getElemFiles('fully-block', 'elem', 'modName', 'modVal')[0];
-                    var filename = path.join(fullyBlockDirname, '__elem', '_modName', name);
+                    var filename = path.join(fullyBlockDirname, '__elem', '_modName', name + '.file');
 
                     file.fullname.must.be(filename);
                 })
                 .then(done, done);
         });
 
-        it('must detect mod file of elem in level', function (done) {
+        it('must detect mod dir of elem in level', function (done) {
             bundle.runTech(LevelsTech, { levels: [blocksDirname] })
                 .then(function (levels) {
                     var name = 'fully-block__elem_modName_modVal';
@@ -249,8 +249,8 @@ describe('techs', function () {
             desktopBundle.runTech(LevelsTech, { levels: desktopLevels })
                 .then(function (levels) {
                     var files = levels.getBlockFiles('block-1');
-                    var filename1 = path.join(commonLevel, 'block-1', 'block-1');
-                    var filename2 = path.join(desktopLevel, 'block-1', 'block-1');
+                    var filename1 = path.join(commonLevel, 'block-1', 'block-1.file');
+                    var filename2 = path.join(desktopLevel, 'block-1', 'block-1.file');
 
                     files[0].fullname.must.be(filename1);
                     files[1].fullname.must.be(filename2);

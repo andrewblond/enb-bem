@@ -19,14 +19,14 @@ describe('techs', function () {
                     {
                         directory: 'block',
                         items: [
-                            { file: 'block' },
-                            { directory: '_mod', items: [{ file: 'block_mod' }] },
-                            { directory: '_modName', items: [{ file: 'block_modName_modVal' }] },
+                            { file: 'block.file' },
+                            { directory: '_mod', items: [{ file: 'block_mod.file' }] },
+                            { directory: '_modName', items: [{ file: 'block_modName_modVal.file' }] },
                             { directory: '__elem',
                                 items: [
-                                    { file: 'block__elem' },
-                                    { directory: '_mod', items: [ { file: 'block__elem_mod' }] },
-                                    { directory: '_modName', items: [{ file: 'block__elem_modName_modVal'}] }
+                                    { file: 'block__elem.file' },
+                                    { directory: '_mod', items: [ { file: 'block__elem_mod.file' }] },
+                                    { directory: '_modName', items: [{ file: 'block__elem_modName_modVal.file'}] }
                                 ]
                             }
                         ]
@@ -104,8 +104,8 @@ describe('techs', function () {
                 })
                 .then(function (result) {
                     var files = result['bundle.files'];
-                    var file = files.getByName('block')[0];
-                    var filename = path.join(fileLevels[0], 'block', 'block');
+                    var file = files.getByName('block.file')[0];
+                    var filename = path.join(fileLevels[0], 'block', 'block.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -122,8 +122,8 @@ describe('techs', function () {
                 })
                 .then(function (result) {
                     var files = result['bundle.files'];
-                    var file = files.getByName('block_mod')[0];
-                    var filename = path.join(fileLevels[0], 'block', '_mod', 'block_mod');
+                    var file = files.getByName('block_mod.file')[0];
+                    var filename = path.join(fileLevels[0], 'block', '_mod', 'block_mod.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -140,8 +140,8 @@ describe('techs', function () {
                 })
                 .then(function (result) {
                     var files = result['bundle.files'];
-                    var file = files.getByName('block_modName_modVal')[0];
-                    var filename = path.join(fileLevels[0], 'block', '_modName', 'block_modName_modVal');
+                    var file = files.getByName('block_modName_modVal.file')[0];
+                    var filename = path.join(fileLevels[0], 'block', '_modName', 'block_modName_modVal.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -158,8 +158,8 @@ describe('techs', function () {
                 })
                 .then(function (result) {
                     var files = result['bundle.files'];
-                    var file = files.getByName('block__elem')[0];
-                    var filename = path.join(fileLevels[0], 'block', '__elem', 'block__elem');
+                    var file = files.getByName('block__elem.file')[0];
+                    var filename = path.join(fileLevels[0], 'block', '__elem', 'block__elem.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -177,8 +177,8 @@ describe('techs', function () {
                 })
                 .then(function (result) {
                     var files = result['bundle.files'];
-                    var file = files.getByName('block__elem_mod')[0];
-                    var filename = path.join(fileLevels[0], 'block', '__elem', '_mod', 'block__elem_mod');
+                    var file = files.getByName('block__elem_mod.file')[0];
+                    var filename = path.join(fileLevels[0], 'block', '__elem', '_mod', 'block__elem_mod.file');
 
                     file.fullname.must.be(filename);
                 })
@@ -196,9 +196,9 @@ describe('techs', function () {
                 })
                 .then(function (result) {
                     var files = result['bundle.files'];
-                    var file = files.getByName('block__elem_modName_modVal')[0];
+                    var file = files.getByName('block__elem_modName_modVal.file')[0];
                     var filename = path.join(fileLevels[0], 'block', '__elem',
-                        '_modName', 'block__elem_modName_modVal');
+                        '_modName', 'block__elem_modName_modVal.file');
 
                     file.fullname.must.be(filename);
                 })
