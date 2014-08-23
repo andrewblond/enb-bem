@@ -56,9 +56,16 @@ module.exports = inherit(require('enb/lib/tech/base-tech'), {
         var levelsToCache = [];
         var levelsIndex = {};
         var cache = this.node.getNodeCache(target);
+        var levelConfig = _this._levelConfig;
 
-        for (var i = 0, l = this._levelConfig.length; i < l; i++) {
-            var levelInfo = this._levelConfig[i];
+        for (var i = 0, l = levelConfig.length; i < l; i++) {
+            if (typeof levelConfig[i] === 'object') {
+                levelConfig[i].path = path.resolve(levelConfig[i].path);
+            } else {
+                levelConfig[i] = path.resolve(levelConfig[i]);
+            }
+
+            var levelInfo = levelConfig[i];
             levelInfo = typeof levelInfo === 'object' ? levelInfo : {path: levelInfo};
             var levelPath = levelInfo.path;
             var levelKey = 'level:' + levelPath;
