@@ -1,4 +1,5 @@
 node_modules
 exlib
 benchmark/fixtures
+test/units/fixtures
 coverage
