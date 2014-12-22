@@ -98,7 +98,11 @@ module.exports = inherit(require('enb/lib/tech/base-tech'), {
                     cache.needRebuildFileList('source-file-list', sourceFilenames)
                 ) {
                     return vow.all(sourceDeps.map(function (source, i) {
-                            if (source) { return source.deps; }
+                            if (source.blocks) {
+                                return deps.fromBemdecl(source.blocks);
+                            } else if (source) {
+                                return source.deps;
+                            }
 
                             var filename = sourceFilenames[i];
 
