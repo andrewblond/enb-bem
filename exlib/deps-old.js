@@ -435,9 +435,13 @@ module.exports.OldDeps = (function () {
 
         _handleCircularMustDeps: function (loopKey) {
             var _this = this;
+
             function visit(key, stack) {
                 var item = _this.items[key];
+
                 if (!item) { return; }
+                if ((key !== loopKey) && (stack.indexOf(key) > 1)) { return true; }
+
                 return item.mustDeps.every(function (i) {
                     if (i === key) { return true; }
                     if (i === loopKey) {
@@ -449,9 +453,11 @@ module.exports.OldDeps = (function () {
                             return false;
                         }
                     }
+
                     return visit(i, stack.concat(i));
                 });
             }
+
             visit(loopKey, [loopKey]);
         },
 
