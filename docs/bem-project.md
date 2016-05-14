@@ -59,3 +59,4 @@ src/
 * [bem-components](https://ru.bem.info/libs/bem-components/)
 
 Подробнее об организации БЭМ-проектов в файловой системе читайте в разделе [методология](https://ru.bem.info/method/filesystem/) на сайте [bem.info](https://ru.bem.info/).
+
