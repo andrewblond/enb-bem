@@ -181,12 +181,9 @@ module.exports = buildFlow.create()
                     .pipe(new stream.Writable({
                         objectMode: true,
                         write: function (file, encoding, callback) {
-                            fs.stat(file.path, (err, stats) => {
-                                if (err) {
-                                    return callback(err);
-                                }
-
+                            try {
                                 const id = stringifyEntity(file.entity);
+                                const stats = fs.statSync(file.path);
 
                                 file.isDirectory = stats.isDirectory();
                                 file.mtime = stats.mtime;
@@ -194,7 +191,9 @@ module.exports = buildFlow.create()
                                 (data[id] || (data[id] = [])).push(file);
 
                                 callback();
-                            });
+                            } catch (err) {
+                                callback(err);
+                            }
                         }
                     }))
                     .on('error', reject)
