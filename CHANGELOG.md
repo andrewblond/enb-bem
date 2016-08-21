@@ -1,6 +1,57 @@
 История изменений
 =================
 
+2.2.1
+-----
+
+### Исправления ошибок
+
+Исправлена работа технологии `deps-by-tech-to-bemdecl`:
+
+* Неправильно учитывался контекст БЭМ-сущности по имени файла ([#201]).
+
+2.2.0
+-----
+
+### Опции
+
+Для технологий `levels-to-bemdecl`, `bemjson-to-bemdecl` и `deps-by-tech-to-bemdecl` добавлена опция [bemdeclFormat](docs/api.ru.md#bemdeclformat).
+
+Опция позволяет возвращать результат не только в стандартном BEMDECL-формате, но и формате результата `deps` и `depsOld` технологий.
+
+Пример BEMDECL-формата:
+
+```js
+{ blocks: [{ name: 'b', elems: [{ name: 'e', mods: [{ name: 'm', vals: [{ name: 'v' }] }] }] }]}
+```
+
+Пример DEPS-формата:
+
+```js
+{ deps: [{ block: 'b', elem: 'e', mod: 'm', val: 'v' }] }
+```
+
+**Важно:** DEPS-формат позволяет выражать декларации, в которые может входить элемент без своего блока и модификатор без своего блока или элемента. Это может быть необходимо при сборке бандлов, которые будут догружаться в браузере.
+
+2.1.1
+-----
+
+### Исправления ошибок
+
+Исправлена работа технологии `deps-by-tech-to-bemdecl`:
+
+* Не учитывался контекст БЭМ-сущности по имени файла ([#191]).
+* Некорректно обрабатывалась короткая запись для булевых модификаторов ([#192]).
+
+### Зависимости
+
+* Модуль `enb-async-require@1.0.0` обновлен до версии `1.0.1`.
+* Модуль `enb-require-or-eval@1.0.1` обновлен до версии `1.0.2`.
+* Модуль `inherit@2.2.2` обновлен до версии `2.2.3`: возможность подменять метод `__base()` при тестировании.
+* Модуль `js-yaml@3.4.2` обновлен до версии `3.5.2`.
+* Модуль `vow@0.4.11` обновлен до версии `0.4.12`.
+
+
 2.1.0
 -----
 
@@ -184,24 +235,27 @@
 * Модуль `inherit` обновлён до версии `2.2.2`.
 * Модуль `js-yaml` обновлён до версии `3.2.3`.
 
-[#185]: https://github.com/enb-bem/enb-bem-techs/pull/185
-[#179]: https://github.com/enb-bem/enb-bem-techs/issues/179
-[#175]: https://github.com/enb-bem/enb-bem-techs/issues/175
-[#156]: https://github.com/enb-bem/enb-bem-techs/issues/156
-[#151]: https://github.com/enb-bem/enb-bem-techs/issues/151
-[#148]: https://github.com/enb-bem/enb-bem-techs/issues/148
-[#136]: https://github.com/enb-bem/enb-bem-techs/issues/136
-[#129]: https://github.com/enb-bem/enb-bem-techs/issues/129
-[#116]: https://github.com/enb-bem/enb-bem-techs/issues/116
-[#113]: https://github.com/enb-bem/enb-bem-techs/issues/113
-[#112]: https://github.com/enb-bem/enb-bem-techs/issues/112
-[#107]: https://github.com/enb-bem/enb-bem-techs/issues/107
-[#103]: https://github.com/enb-bem/enb-bem-techs/issues/103
-[#99]: https://github.com/enb-bem/enb-bem-techs/issues/99
-[#97]: https://github.com/enb-bem/enb-bem-techs/issues/97
-[#94]: https://github.com/enb-bem/enb-bem-techs/issues/94
-[#93]: https://github.com/enb-bem/enb-bem-techs/issues/93
-[#70]: https://github.com/enb-bem/enb-bem-techs/issues/70
-[#67]: https://github.com/enb-bem/enb-bem-techs/issues/67
-[#41]: https://github.com/enb-bem/enb-bem-techs/issues/41
-[#10]: https://github.com/enb-bem/enb-bem-techs/issues/10
+[#201]: https://github.com/enb/enb-bem-techs/issues/201
+[#192]: https://github.com/enb/enb-bem-techs/issues/192
+[#191]: https://github.com/enb/enb-bem-techs/issues/191
+[#185]: https://github.com/enb/enb-bem-techs/pull/185
+[#179]: https://github.com/enb/enb-bem-techs/issues/179
+[#175]: https://github.com/enb/enb-bem-techs/issues/175
+[#156]: https://github.com/enb/enb-bem-techs/issues/156
+[#151]: https://github.com/enb/enb-bem-techs/issues/151
+[#148]: https://github.com/enb/enb-bem-techs/issues/148
+[#136]: https://github.com/enb/enb-bem-techs/issues/136
+[#129]: https://github.com/enb/enb-bem-techs/issues/129
+[#116]: https://github.com/enb/enb-bem-techs/issues/116
+[#113]: https://github.com/enb/enb-bem-techs/issues/113
+[#112]: https://github.com/enb/enb-bem-techs/issues/112
+[#107]: https://github.com/enb/enb-bem-techs/issues/107
+[#103]: https://github.com/enb/enb-bem-techs/issues/103
+[#99]: https://github.com/enb/enb-bem-techs/issues/99
+[#97]: https://github.com/enb/enb-bem-techs/issues/97
+[#94]: https://github.com/enb/enb-bem-techs/issues/94
+[#93]: https://github.com/enb/enb-bem-techs/issues/93
+[#70]: https://github.com/enb/enb-bem-techs/issues/70
+[#67]: https://github.com/enb/enb-bem-techs/issues/67
+[#41]: https://github.com/enb/enb-bem-techs/issues/41
+[#10]: https://github.com/enb/enb-bem-techs/issues/10

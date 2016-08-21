@@ -1,7 +1,7 @@
 enb-bem-techs
 =============
 
-[![NPM version](https://img.shields.io/npm/v/enb-bem-techs.svg?style=flat)](https://www.npmjs.org/package/enb-bem-techs) [![Build Status](https://img.shields.io/travis/enb-bem/enb-bem-techs/master.svg?style=flat&label=tests)](https://travis-ci.org/enb-bem/enb-bem-techs) [![Build status](https://img.shields.io/appveyor/ci/blond/enb-bem-techs.svg?style=flat&label=windows)](https://ci.appveyor.com/project/blond/enb-bem-techs) [![Coverage Status](https://img.shields.io/coveralls/enb-bem/enb-bem-techs.svg?style=flat)](https://coveralls.io/r/enb-bem/enb-bem-techs?branch=master) [![Dependency Status](https://img.shields.io/david/enb-bem/enb-bem-techs.svg?style=flat)](https://david-dm.org/enb-bem/enb-bem-techs)
+[![NPM version](https://img.shields.io/npm/v/enb-bem-techs.svg?style=flat)](https://www.npmjs.org/package/enb-bem-techs) [![Build Status](https://img.shields.io/travis/enb/enb-bem-techs/master.svg?style=flat&label=tests)](https://travis-ci.org/enb/enb-bem-techs) [![Build status](https://img.shields.io/appveyor/ci/blond/enb-bem-techs.svg?style=flat&label=windows)](https://ci.appveyor.com/project/blond/enb-bem-techs) [![Coverage Status](https://img.shields.io/coveralls/enb/enb-bem-techs.svg?style=flat)](https://coveralls.io/r/enb/enb-bem-techs?branch=master) [![Dependency Status](https://img.shields.io/david/enb/enb-bem-techs.svg?style=flat)](https://david-dm.org/enb/enb-bem-techs)
 
 `enb-bem-techs` — это основной пакет технологий для работы с проектами, созданными по БЭМ-методологии.
 
@@ -15,7 +15,7 @@ enb-bem-techs
 * [levelsToBemdecl](docs/api.ru.md#levelstobemdecl) — формирует BEMDECL-файл из БЭМ-сущностей с указанных уровней.
 * [bemjsonToBemdecl](docs/api.ru.md#bemjsontobemdecl) — формирует BEMDECL-файл из BEMJSON-файла.
 * [deps](docs/api.ru.md#deps) — дополняет декларацию БЭМ-сущностей необходимыми зависимостями.
-* [depsOld](docs/api.ru.md#depsold) — дополняет декларацию БЭМ-сущностей необходимыми зависимостями. Использует алгоритм, заимствованный из [bem-tools](https://ru.bem.info/tools/bem/bem-tools/).
+* [depsOld](docs/api.ru.md#depsold) — дополняет декларацию БЭМ-сущностей необходимыми зависимостями. Использует алгоритм, заимствованный из [bem-tools](https://github.com/bem/bem-tools/tree/support/0.10.x).
 * [depsByTechToBemdecl](docs/api.ru.md#depsbytechtobemdecl) — формирует BEMDECL-файл на основе зависимостей по технологиям.
 * [files](docs/api.ru.md#files) — собирает список исходных файлов и директорий для сборки.
 * [provideBemdecl](docs/api.ru.md#providebemdecl) — копирует BEMDECL-файл из указанной ноды (node) в текущую.
@@ -38,12 +38,12 @@ $ npm install --save-dev enb-bem-techs
 Документация
 ------------
 
-* [API технологий](docs/api.ru.md)
-* [Как устроены БЭМ-проекты](docs/bem-project.md)
+* [Как устроены БЭМ-проекты](https://ru.bem.info/methodology/filesystem/)
 * [Сборка бандла](docs/build-bundle.md)
 * [Сборка страницы](docs/build-page.md)
 * [Сборка merged-бандла](docs/build-merged-bundle.md)
 * [Сборка дистрибутива](docs/build-dist.md)
+* [API технологий](docs/api.ru.md)
 
 Лицензия
 --------

@@ -1,12 +1,21 @@
 var path = require('path'),
+
     vow = require('vow'),
     mockFs = require('mock-fs'),
     TestNode = require('mock-enb/lib/mock-node'),
-    Tech = require('../../techs/bemjson-to-bemdecl');
+
+    Tech = require('../utils/techs').bemjsonToBemdecl;
 
 describe('techs: bemjson-to-bemdecl', function () {
     afterEach(function () {
         mockFs.restore();
+    });
+
+    it('must support deps format', function () {
+        var bemjson = { block: 'block' },
+            bemdecl = [{ block: 'block' }];
+
+        return assert(bemjson, bemdecl, { bemdeclFormat: 'deps' });
     });
 
     it('must detect block', function () {
@@ -203,7 +212,9 @@ describe('techs: bemjson-to-bemdecl', function () {
     });
 });
 
-function assert(bemjson, bemdecl) {
+function assert(bemjson, bemdecl, options) {
+    options || (options = {});
+
     mockFs({
         bundle: {
             'bundle.bemjson.js': '(' + JSON.stringify(bemjson) + ')'
@@ -213,11 +224,15 @@ function assert(bemjson, bemdecl) {
     var bundle = new TestNode('bundle');
 
     return vow.all([
-            bundle.runTechAndGetResults(Tech),
-            bundle.runTechAndRequire(Tech)
+            bundle.runTechAndGetResults(Tech, options),
+            bundle.runTechAndRequire(Tech, options)
         ])
         .spread(function (data, target) {
-            data['bundle.bemdecl.js'].blocks.must.eql(bemdecl);
-            target[0].blocks.must.eql(bemdecl);
+            var isDepsFormat = options.bemdeclFormat === 'deps',
+                actualDecl = isDepsFormat ? data['bundle.bemdecl.js'].deps : data['bundle.bemdecl.js'].blocks,
+                actualData = isDepsFormat ? target[0].deps : target[0].blocks;
+
+            actualDecl.must.eql(bemdecl);
+            actualData.must.eql(bemdecl);
         });
 }

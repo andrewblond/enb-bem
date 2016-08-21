@@ -17,6 +17,7 @@ var inherit = require('inherit'),
  * @param {Object}  [options]                          Options.
  * @param {String}  [options.target='?.bemdecl.js']    Path to a built BEMDECL file.
  * @param {String}  [options.source='?.bemjson.js']    Path to a BEMJSON file.
+ * @param {String}  [options.bemdeclFormat='bemdecl']  Format of result declaration (bemdecl or deps).
  *
  * @example
  * var FileProvideTech = require('enb/techs/file-provider'),
@@ -39,25 +40,11 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        var logger = this.node.getLogger();
+        var node = this.node;
 
-        this._target = this.getOption('destTarget');
-        if (this._target) {
-            logger.logOptionIsDeprecated(this.node.unmaskTargetName(this._target), 'enb-bem-techs', this.getName(),
-                'destTarget', 'target', ' It will be removed in v3.0.0.');
-        } else {
-            this._target = this.getOption('target', '?.bemdecl.js');
-        }
-        this._target = this.node.unmaskTargetName(this._target);
-
-        this._sourceTarget = this.getOption('sourceTarget');
-        if (this._sourceTarget) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem-techs', this.getName(),
-                'sourceTarget', 'source', ' It will be removed in v3.0.0.');
-        } else {
-            this._sourceTarget = this.getOption('source', '?.bemjson.js');
-        }
-        this._sourceTarget = this.node.unmaskTargetName(this._sourceTarget);
+        this._target = node.unmaskTargetName(this.getOption('target', '?.bemdecl.js'));
+        this._sourceTarget = node.unmaskTargetName(this.getOption('source', '?.bemjson.js'));
+        this._bemdeclFormat = this.getOption('bemdeclFormat', 'bemdecl');
     },
 
     getTargets: function () {
@@ -69,7 +56,8 @@ module.exports = inherit(BaseTech, {
             target = this._target,
             cache = node.getNodeCache(target),
             bemdeclFilename = node.resolvePath(target),
-            bemjsonFilename = node.resolvePath(this._sourceTarget);
+            bemjsonFilename = node.resolvePath(this._sourceTarget),
+            bemdeclFormat = this._bemdeclFormat;
 
         return this.node.requireSources([this._sourceTarget])
             .then(function () {
@@ -79,14 +67,25 @@ module.exports = inherit(BaseTech, {
                     return requireOrEval(bemjsonFilename)
                         .then(function (bemjson) {
                             var bemjsonDeps = getDepsFromBemjson(bemjson),
-                                bemdecl = deps.toBemdecl(bemjsonDeps),
-                                str = 'exports.blocks = ' + JSON.stringify(bemdecl, null, 4) + ';\n';
+                                decl,
+                                data,
+                                str;
+
+                            if (bemdeclFormat === 'deps') {
+                                decl = bemjsonDeps;
+                                data = { deps: decl };
+                                str = 'exports.deps = ' + JSON.stringify(decl, null, 4) + ';\n';
+                            } else {
+                                decl = deps.toBemdecl(bemjsonDeps),
+                                data = { blocks: decl };
+                                str = 'exports.blocks = ' + JSON.stringify(decl, null, 4) + ';\n';
+                            }
 
                             return vfs.write(bemdeclFilename, str, 'utf-8')
                                 .then(function () {
                                     cache.cacheFileInfo('bemdecl-file', bemdeclFilename);
                                     cache.cacheFileInfo('bemjson-file', bemjsonFilename);
-                                    node.resolveTarget(target, { blocks: bemdecl });
+                                    node.resolveTarget(target, data);
                                 });
                         });
                 } else {

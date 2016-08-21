@@ -23,6 +23,7 @@ var inherit = require('inherit'),
  * @param {String}      [options.target=?.bemdecl.js]        Path to BEMDECL file to build.
  * @param {String}      [options.filesTarget='?.files']      Path to target with {@link FileList}.
  * @param {String[]}    [options.sourceSuffixes=['deps.js']] Files with specified suffixes involved in the assembly.
+ * @param {String}  [options.bemdeclFormat='bemdecl'] Format of result declaration (bemdecl or deps).
  *
  * @example
  * var FileProvideTech = require('enb/techs/file-provider'),
@@ -54,11 +55,14 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        this._target = this.node.unmaskTargetName(this.getOption('target', '?.bemdecl.js'));
-        this._filesTarget = this.node.unmaskTargetName(this.getOption('filesTarget', '?.files'));
+        var node = this.node;
+
+        this._target = node.unmaskTargetName(this.getOption('target', '?.bemdecl.js'));
+        this._filesTarget = node.unmaskTargetName(this.getOption('filesTarget', '?.files'));
         this._sourceTech = this.getRequiredOption('sourceTech');
         this._destTech = this.getOption('destTech');
         this._sourceSuffixes = this.getOption('sourceSuffixes', ['deps.js']);
+        this._bemdeclFormat = this.getOption('bemdeclFormat', 'bemdecl');
     },
 
     getTargets: function () {
@@ -72,7 +76,8 @@ module.exports = inherit(BaseTech, {
             bemdeclFilename = node.resolvePath(target),
             sourceTech = this._sourceTech,
             destTech = this._destTech,
-            sourceSuffixes = Array.isArray(this._sourceSuffixes) ? this._sourceSuffixes : [this._sourceSuffixes];
+            sourceSuffixes = Array.isArray(this._sourceSuffixes) ? this._sourceSuffixes : [this._sourceSuffixes],
+            bemdeclFormat = this._bemdeclFormat;
 
         return this.node.requireSources([this._filesTarget])
             .spread(function (files) {
@@ -103,7 +108,23 @@ module.exports = inherit(BaseTech, {
                                     ['mustDeps', 'shouldDeps'].forEach(function (depType) {
                                         if (dep[depType]) {
                                             deps.flattenDeps(dep[depType]).forEach(function (singleDep) {
-                                                singleDep.block || (singleDep.block = notation.block);
+                                                if (!singleDep.block) {
+                                                    singleDep.block = notation.block;
+
+                                                    if (!singleDep.elem) {
+                                                        notation.elem && (singleDep.elem = notation.elem);
+
+                                                        if (!singleDep.mod) {
+                                                             notation.modName && (singleDep.mod = notation.modName);
+
+                                                             if (!singleDep.val) {
+                                                                 notation.modVal && (singleDep.val = notation.modVal);
+                                                             }
+                                                        }
+                                                    }
+                                                }
+
+                                                singleDep.val || singleDep.mod && (singleDep.val = true);
 
                                                 if (!destTech || singleDep.tech === destTech) {
                                                     var key = depKey(singleDep);
@@ -119,14 +140,25 @@ module.exports = inherit(BaseTech, {
                             });
                         });
 
-                        var blocks = deps.toBemdecl(result),
-                            str = 'exports.blocks = ' + JSON.stringify(blocks, null, 4) + ';\n';
+                        var decl,
+                            data,
+                            str;
+
+                        if (bemdeclFormat === 'deps') {
+                            decl = result;
+                            data = { deps: decl };
+                            str = 'exports.deps = ' + JSON.stringify(decl, null, 4) + ';\n';
+                        } else {
+                            decl = deps.toBemdecl(result),
+                            data = { blocks: decl };
+                            str = 'exports.blocks = ' + JSON.stringify(decl, null, 4) + ';\n';
+                        }
 
                         return vfs.write(bemdeclFilename, str, 'utf-8')
                             .then(function () {
                                 cache.cacheFileInfo('bemdecl-file', bemdeclFilename);
                                 cache.cacheFileList('deps-files', depsFiles);
-                                node.resolveTarget(target, { blocks: blocks });
+                                node.resolveTarget(target, data);
                             });
                     });
                 } else {
