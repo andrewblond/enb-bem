@@ -50,27 +50,13 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        var _this = this,
-            logger = this.node.getLogger();
+        var node = this.node,
+            target = this.getOption('target', node.getTargetName('deps.js')),
+            sources = this.getRequiredOption('sources');
 
-        this._target = this.getOption('depsTarget');
-        if (this._target) {
-            logger.logOptionIsDeprecated(this.node.unmaskTargetName(this._target), 'enb-bem', this.getName(),
-                'depsTarget', 'target', ' It will be removed in v3.0.0.');
-        } else {
-            this._target = this.getOption('target', this.node.getTargetName('deps.js'));
-        }
-        this._target = this.node.unmaskTargetName(this._target);
-
-        this._sources = this.getOption('depsSources');
-        if (this._sources) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem', this.getName(),
-                'depsSources', 'sources', ' It will be removed in v3.0.0.');
-        } else {
-            this._sources = this.getRequiredOption('sources');
-        }
-        this._sources = this._sources.map(function (source) {
-            return _this.node.unmaskTargetName(source);
+        this._target = node.unmaskTargetName(target);
+        this._sources = sources.map(function (source) {
+            return node.unmaskTargetName(source);
         });
     },
 
@@ -79,8 +65,7 @@ module.exports = inherit(BaseTech, {
     },
 
     build: function () {
-        var _this = this,
-            node = this.node,
+        var node = this.node,
             target = this._target,
             sources = this._sources,
             cache = node.getNodeCache(target),
@@ -89,7 +74,7 @@ module.exports = inherit(BaseTech, {
                 return node.resolvePath(sourceTarget);
             });
 
-        return this.node.requireSources(sources)
+        return node.requireSources(sources)
             .then(function (sourceDeps) {
                 var rebuildNeeded = cache.needRebuildFile('deps-file', targetFilename);
 
@@ -125,7 +110,7 @@ module.exports = inherit(BaseTech, {
                                     sourceFilenames.forEach(function (filename) {
                                         cache.cacheFileInfo(filename, filename);
                                     });
-                                    _this.node.resolveTarget(target, { deps: intersectedDeps });
+                                    node.resolveTarget(target, { deps: intersectedDeps });
                                 });
                         });
                 } else {

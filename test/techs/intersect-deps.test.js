@@ -1,8 +1,10 @@
 var path = require('path'),
+
     vow = require('vow'),
     mockFs = require('mock-fs'),
     TestNode = require('mock-enb/lib/mock-node'),
-    Tech = require('../../techs/intersect-deps');
+
+    Tech = require('../utils/techs').intersectDeps;
 
 describe('techs: intersect-deps', function () {
     afterEach(function () {

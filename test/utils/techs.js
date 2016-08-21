@@ -19,4 +19,6 @@ module.exports = {
     provideDeps: proxyquire('../../techs/provide-deps', stub),
     provideBemdecl: proxyquire('../../techs/provide-bemdecl', stub),
     subtractDeps: proxyquire('../../techs/subtract-deps', stub),
+    intersectBemdecl: proxyquire('../../techs/intersect-bemdecl', stub),
+    intersectDeps: proxyquire('../../techs/intersect-deps', stub),
 };
