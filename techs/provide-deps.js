@@ -3,7 +3,7 @@ var inherit = require('inherit'),
     enb = require('enb'),
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
-    asyncRequire = require('enb-async-require'),
+    requireOrEval = require('enb-require-or-eval'),
     clearRequire = require('clear-require');
 
 /**
@@ -130,5 +130,5 @@ function requireDeps(data, filename) {
     if (data) { return vow.resolve(data); }
 
     clearRequire(filename);
-    return asyncRequire(filename);
+    return requireOrEval(filename);
 }
