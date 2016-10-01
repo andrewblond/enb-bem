@@ -45,7 +45,6 @@
   "dependencies": {
     "bem-naming": "1.0.1",
     "bem-walk": "1.0.0-1",
-    "clear-require": "1.0.1",
     "enb-require-or-eval": "enb/enb-require-or-eval#add_node_eval",
     "inherit": "2.2.3",
     "js-yaml": "3.5.2",

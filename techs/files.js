@@ -5,7 +5,6 @@ var fs = require('fs'),
     vow = require('vow'),
     enb = require('enb'),
     requireOrEval = require('enb-require-or-eval'),
-    clearRequire = require('clear-require'),
     stringifyEntity = require('bem-naming').stringify,
 
     deps = require('../lib/deps/deps'),
@@ -177,7 +176,6 @@ function getFileInfo(file) {
 
 function requireSourceDeps(data, filename) {
     return (data ? vow.resolve(data) : (
-            clearRequire(filename),
             requireOrEval(filename)
         ))
         .then(function (sourceDeps) {
