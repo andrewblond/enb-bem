@@ -1,8 +1,7 @@
 var vow = require('vow'),
     inherit = require('inherit'),
     enb = require('enb'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require'),
+    requireOrEval = require('enb-require-or-eval'),
 
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     FileList = enb.FileList,
@@ -113,9 +112,8 @@ module.exports = inherit(BaseTech, {
                         });
                 } else {
                     node.isValidTarget(target);
-                    clearRequire(targetFilename);
 
-                    return asyncRequire(targetFilename)
+                    return requireOrEval(targetFilename)
                         .then(function (result) {
                             node.resolveTarget(target, result);
                             return null;
@@ -127,8 +125,7 @@ module.exports = inherit(BaseTech, {
 
 function requireSourceDeps(data, filename) {
     return (data ? vow.resolve(data) : (
-            clearRequire(filename),
-            asyncRequire(filename)
+            requireOrEval(filename)
         ))
         .then(function (sourceDeps) {
             if (sourceDeps.blocks) {

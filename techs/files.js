@@ -4,8 +4,7 @@ var fs = require('fs'),
     inherit = require('inherit'),
     vow = require('vow'),
     enb = require('enb'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require'),
+    requireOrEval = require('enb-require-or-eval'),
     stringifyEntity = require('bem-naming').stringify,
 
     deps = require('../lib/deps/deps'),
@@ -177,8 +176,7 @@ function getFileInfo(file) {
 
 function requireSourceDeps(data, filename) {
     return (data ? vow.resolve(data) : (
-            clearRequire(filename),
-            asyncRequire(filename)
+            requireOrEval(filename)
         ))
         .then(function (sourceDeps) {
             if (sourceDeps.blocks) {

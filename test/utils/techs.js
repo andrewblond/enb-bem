@@ -1,9 +1,7 @@
 var proxyquire = require('proxyquire'),
     asyncRequire = require('./async-require'),
     stub = {
-        'enb-require-or-eval': asyncRequire,
-        'enb-async-require': asyncRequire,
-        'clear-require': function () {}
+        'enb-require-or-eval': asyncRequire
     };
 
 module.exports = {

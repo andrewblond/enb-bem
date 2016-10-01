@@ -3,8 +3,7 @@ var inherit = require('inherit'),
     enb = require('enb'),
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require'),
+    requireOrEval = require('enb-require-or-eval'),
     deps = require('../lib/deps/deps');
 
 /**
@@ -89,8 +88,7 @@ module.exports = inherit(BaseTech, {
 
                             var filename = sourceFilenames[i];
 
-                            clearRequire(filename);
-                            return asyncRequire(filename)
+                            return requireOrEval(filename)
                                 .then(function (result) {
                                     return deps.fromBemdecl(result.blocks);
                                 });
@@ -111,9 +109,8 @@ module.exports = inherit(BaseTech, {
                         });
                 } else {
                     node.isValidTarget(target);
-                    clearRequire(targetFilename);
 
-                    return asyncRequire(targetFilename)
+                    return requireOrEval(targetFilename)
                         .then(function (result) {
                             node.resolveTarget(target, result);
                             return null;
