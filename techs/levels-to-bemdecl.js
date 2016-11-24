@@ -1,10 +1,11 @@
 var inherit = require('inherit'),
     enb = require('enb'),
+    asyncRequire = require('enb-async-require'),
+    clearRequire = require('clear-require'),
+
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
-    deps = require('../lib/deps/deps'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require');
+    deps = require('../lib/deps/deps');
 
 /**
  * @class LevelsToBemdeclTech
@@ -39,10 +40,10 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        this._target = this.node.unmaskTargetName(
-            this.getOption('target', this.node.getTargetName('bemdecl.js')));
-        this._source = this.node.unmaskTargetName(
-            this.getOption('source', this.node.getTargetName('levels')));
+        var node = this.node;
+
+        this._target = node.unmaskTargetName(this.getOption('target', node.getTargetName('bemdecl.js')));
+        this._source = node.unmaskTargetName(this.getOption('source', node.getTargetName('levels')));
         this._bemdeclFormat = this.getOption('bemdeclFormat', 'bemdecl');
     },
 
@@ -57,42 +58,32 @@ module.exports = inherit(BaseTech, {
             bemdeclFormat = this._bemdeclFormat,
             cache = node.getNodeCache(target);
 
-        return node.requireSources([this._source]).spread(function (levels) {
-            if (cache.needRebuildFile('bemdecl-file', bemdeclFilename)) {
-                var resDeps = [],
-                    decl = [],
-                    data,
-                    str;
+        return node.requireSources([this._source]).spread(function (introspection) {
+            var resDeps = introspection.getEntities().map(function (entity) {
+                    var dep = {
+                        block: entity.block
+                    };
 
-                levels.items.forEach(function (level) {
-                    Object.keys(level.blocks).forEach(function (name) {
-                        var block = level.blocks[name];
+                    entity.elem && (dep.elem = entity.elem);
+                    entity.modName && (dep.mod = entity.modName);
+                    entity.modVal && (dep.val = entity.modVal);
 
-                        resDeps.push({
-                            block: name
-                        });
+                    return dep;
+                }),
+                data,
+                str;
 
-                        processMods(resDeps, name, block.mods);
-                        processElems(resDeps, name, block.elements);
-                    });
-                });
-
-                if (bemdeclFormat === 'deps') {
-                    decl = resDeps;
-                    data = { deps: decl };
-                    str = 'exports.deps = ' + JSON.stringify(decl, null, 4) + ';\n';
-                } else {
-                    decl = deps.toBemdecl(resDeps);
-                    data = { blocks: decl };
-                    str = 'exports.blocks = ' + JSON.stringify(decl, null, 4) + ';\n';
-                }
-
-                return vfs.write(bemdeclFilename, str, 'utf8')
-                    .then(function () {
-                        cache.cacheFileInfo('bemdecl-file', bemdeclFilename);
-                        node.resolveTarget(target, data);
-                    });
+            if (bemdeclFormat === 'deps') {
+                data = { deps: resDeps };
+                str = 'exports.deps = ' + JSON.stringify(resDeps, null, 4) + ';\n';
             } else {
+                var decl = deps.toBemdecl(resDeps);
+
+                data = { blocks: decl };
+                str = 'exports.blocks = ' + JSON.stringify(decl, null, 4) + ';\n';
+            }
+
+            if (cache.get('bemdecl') === str) {
                 node.isValidTarget(target);
                 clearRequire(bemdeclFilename);
 
@@ -102,39 +93,12 @@ module.exports = inherit(BaseTech, {
                         return null;
                     });
             }
+
+            return vfs.write(bemdeclFilename, str, 'utf8')
+                .then(function () {
+                    cache.set('bemdecl', str);
+                    node.resolveTarget(target, data);
+                });
         });
     }
 });
-
-function processElems(deps, block, elems) {
-    if (elems) {
-        Object.keys(elems).forEach(function (elemName) {
-            deps.push({
-                block: block,
-                elem: elemName
-            });
-
-            processMods(deps, block, elems[elemName].mods, elemName);
-        });
-    }
-}
-
-function processMods(deps, block, mods, elem) {
-    if (mods) {
-        Object.keys(mods).forEach(function (modName) {
-            var vals = Object.keys(mods[modName]);
-
-            vals.forEach(function (val) {
-                var dep = {
-                    block: block,
-                    mod: modName,
-                    val: val === '*' ? true : val
-                };
-
-                elem && (dep.elem = elem);
-
-                deps.push(dep);
-            });
-        });
-    }
-}
