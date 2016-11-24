@@ -3,8 +3,7 @@ var inherit = require('inherit'),
     enb = require('enb'),
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require'),
+    fileEval = require('file-eval'),
     deps = require('../lib/deps/deps');
 
 /**
@@ -51,35 +50,11 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        var node = this.node,
-            logger = node.getLogger();
+        var node = this.node;
 
-        this._target = this.getOption('depsTarget');
-        if (this._target) {
-            logger.logOptionIsDeprecated(node.unmaskTargetName(this._target), 'enb-bem', this.getName(),
-                'depsTarget', 'target', ' It will be removed in v3.0.0.');
-        } else {
-            this._target = this.getOption('target', '?.deps.js');
-        }
-        this._target = node.unmaskTargetName(this._target);
-
-        this._fromTarget = this.getOption('subtractFromTarget');
-        if (this._fromTarget) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem-techs', this.getName(),
-                'subtractFromTarget', 'from', ' It will be removed in v3.0.0.');
-        } else {
-            this._fromTarget = this.getRequiredOption('from');
-        }
-        this._fromTarget = node.unmaskTargetName(this._fromTarget);
-
-        this._whatTarget = this.getOption('subtractWhatTarget');
-        if (this._whatTarget) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem-techs', this.getName(),
-                'subtractWhatTarget', 'what', ' It will be removed in v3.0.0.');
-        } else {
-            this._whatTarget = this.getRequiredOption('what');
-        }
-        this._whatTarget = node.unmaskTargetName(this._whatTarget);
+        this._target = node.unmaskTargetName(this.getOption('target', '?.deps.js'));
+        this._fromTarget = node.unmaskTargetName(this.getRequiredOption('from'));
+        this._whatTarget = node.unmaskTargetName(this.getRequiredOption('what'));
     },
 
     getTargets: function () {
@@ -120,9 +95,8 @@ module.exports = inherit(BaseTech, {
                         });
                 } else {
                     node.isValidTarget(target);
-                    clearRequire(targetFilename);
 
-                    return asyncRequire(targetFilename)
+                    return fileEval(targetFilename)
                         .then(function (result) {
                             node.resolveTarget(target, result);
                             return null;
@@ -135,6 +109,5 @@ module.exports = inherit(BaseTech, {
 function requireDeps(deps, filename) {
     if (deps) { return deps; }
 
-    clearRequire(filename);
-    return asyncRequire(filename);
+    return fileEval(filename);
 }

@@ -1,19 +1,19 @@
 var inherit = require('inherit'),
     vow = require('vow'),
     enb = require('enb'),
-    vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
-    BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require'),
-    DepsResolver = require('../lib/deps/deps-resolver'),
-    deps = require('../lib/deps/deps');
+    fileEval = require('file-eval'),
+    bemDeps = require('@bem/deps'),
+    bemDecl = require('bem-decl'),
+    vfs = enb.asyncFs || require('enb/lib/fs/async-fs'),
+    BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech');
 
 /**
  * @class DepsTech
  * @augments {BaseTech}
  * @classdesc
  *
- * Supplements declaration of BEM entities using information about dependencies in `deps.js` or `deps.yaml` files.
+ * Supplements declaration of BEM entities using information about dependencies in `deps.js` or
+ * `deps.yaml` (not supported yet) files.
  *
  * @param {Object}  [options]                             Options.
  * @param {String}  [options.target=?.deps.js]            Path to built file with completed declaration of BEM entities.
@@ -28,7 +28,7 @@ var inherit = require('inherit'),
  *     config.node('bundle', function(node) {
  *         // scan levels
  *         node.addTech([bemTechs.levels, { levels: ['blocks'] }]);
-
+ *
  *         // get BEMDECL file
  *         node.addTech([FileProvideTech, { target: '?.bemdecl.js' }]);
  *
@@ -47,28 +47,11 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        var logger = this.node.getLogger();
+        var node = this.node;
 
-        this._target = this.getOption('depsTarget');
-        if (this._target) {
-            logger.logOptionIsDeprecated(this.node.unmaskTargetName(this._target), 'enb-bem-techs', this.getName(),
-                'depsTarget', 'target', ' It will be removed in v3.0.0.');
-        } else {
-            this._target = this.getOption('target', this.node.getTargetName('deps.js'));
-        }
-        this._target = this.node.unmaskTargetName(this._target);
-
-        this._declFile = this.getOption('bemdeclTarget');
-        if (this._declFile) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem-techs', this.getName(),
-                'bemdeclTarget', 'bemdeclFile', ' It will be removed in v3.0.0.');
-        } else {
-            this._declFile = this.getOption('bemdeclFile', this.node.getTargetName('bemdecl.js'));
-        }
-        this._declFile = this.node.unmaskTargetName(this._declFile);
-
-        this._levelsTarget = this.node.unmaskTargetName(
-            this.getOption('levelsTarget', this.node.getTargetName('levels')));
+        this._target = node.unmaskTargetName(this.getOption('target', node.getTargetName('deps.js')));
+        this._declFile = node.unmaskTargetName(this.getOption('bemdeclFile', node.getTargetName('bemdecl.js')));
+        this._levelsTarget = node.unmaskTargetName(this.getOption('levelsTarget', node.getTargetName('levels')));
     },
 
     getTargets: function () {
@@ -80,11 +63,11 @@ module.exports = inherit(BaseTech, {
             target = this._target,
             targetFilename = node.resolvePath(target),
             cache = node.getNodeCache(target),
-            declFilename = this.node.resolvePath(this._declFile);
+            declFilename = node.resolvePath(this._declFile);
 
-        return this.node.requireSources([this._levelsTarget, this._declFile])
-            .spread(function (levels, sourceDeps) {
-                var depFiles = levels.getFilesBySuffix('deps.js').concat(levels.getFilesBySuffix('deps.yaml'));
+        return node.requireSources([this._levelsTarget, this._declFile])
+            .spread(function (introspections, sourceDeps) {
+                var depFiles = introspections.getFilesByTechs(['deps.js', 'deps.yaml']);
 
                 if (cache.needRebuildFile('deps-file', targetFilename) ||
                     cache.needRebuildFile('decl-file', declFilename) ||
@@ -92,12 +75,11 @@ module.exports = inherit(BaseTech, {
                 ) {
                     return requireSourceDeps(sourceDeps, declFilename)
                         .then(function (sourceDeps) {
-                            var resolver = new DepsResolver(levels),
-                                decls = resolver.normalizeDeps(sourceDeps);
-
-                            return resolver.addDecls(decls)
-                                .then(function () {
-                                    var resolvedDeps = resolver.resolve(),
+                            return bemDeps.read()(depFiles)
+                                .then(bemDeps.parse())
+                                .then(bemDeps.buildGraph)
+                                .then(function (graph) {
+                                    var resolvedDeps = graph.dependenciesOf(sourceDeps).map(convertEntity),
                                         str = 'exports.deps = ' + JSON.stringify(resolvedDeps, null, 4) + ';\n';
 
                                     return vfs.write(targetFilename, str, 'utf8')
@@ -111,9 +93,8 @@ module.exports = inherit(BaseTech, {
                         });
                 } else {
                     node.isValidTarget(target);
-                    clearRequire(targetFilename);
 
-                    return asyncRequire(targetFilename)
+                    return fileEval(targetFilename)
                         .then(function (result) {
                             node.resolveTarget(target, result);
                             return null;
@@ -123,16 +104,36 @@ module.exports = inherit(BaseTech, {
     }
 });
 
-function requireSourceDeps(data, filename) {
-    return (data ? vow.resolve(data) : (
-            clearRequire(filename),
-            asyncRequire(filename)
-        ))
-        .then(function (sourceDeps) {
-            if (sourceDeps.blocks) {
-                return deps.fromBemdecl(sourceDeps.blocks);
-            }
+function convertEntity(obj) {
+    var entity = obj.entity,
+        result = {
+            block: entity.block
+        };
 
-            return Array.isArray(sourceDeps) ? sourceDeps : sourceDeps.deps;
+    if (entity.elem) {
+        result.elem = entity.elem;
+    }
+
+    if (entity.mod) {
+        result.mod = entity.mod.name;
+        result.val = entity.mod.val;
+    }
+
+    return result;
+}
+
+function requireSourceDeps(data, filename) {
+    return (data ? vow.resolve(data) : fileEval(filename))
+        .then(function (sourceDeps) {
+            // todo:добавить параметр с версией декларации
+            if (sourceDeps.deps) {
+                return sourceDeps.deps;
+            } else if (sourceDeps.blocks) {
+                return bemDecl.normalizer('v1')(sourceDeps.blocks).map(function (item) {
+                    return item.entity;
+                });
+            } else {
+                return sourceDeps;
+            }
         });
 }

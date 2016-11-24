@@ -3,8 +3,7 @@ var inherit = require('inherit'),
     enb = require('enb'),
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require');
+    fileEval = require('file-eval');
 
 /**
  * @class ProvideBemdeclTech
@@ -72,33 +71,11 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        var logger = this.node.getLogger();
+        var node = this.node;
 
-        this._target = this.getOption('bemdeclTarget');
-        if (this._target) {
-            logger.logOptionIsDeprecated(this.node.unmaskTargetName(this._target), 'enb-bem', this.getName(),
-                'bemdeclTarget', 'target', ' It will be removed in v3.0.0.');
-        } else {
-            this._target = this.getOption('target', '?.bemdecl.js');
-        }
-        this._target = this.node.unmaskTargetName(this._target);
-
-        this._fromNode = this.getOption('sourceNodePath');
-        if (this._fromNode) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem', this.getName(),
-                'sourceNodePath', 'node', ' It will be removed in v3.0.0.');
-        } else {
-            this._fromNode = this.getRequiredOption('node');
-        }
-
-        this._sourceTarget = this.getOption('sourceTarget');
-        if (this._sourceTarget) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem', this.getName(),
-                'sourceTarget', 'source', ' It will be removed in v3.0.0.');
-        } else {
-            this._sourceTarget = this.getOption('source', '?.bemdecl.js');
-        }
-        this._sourceTarget = this.node.unmaskNodeTargetName(this._fromNode, this._sourceTarget);
+        this._target = node.unmaskTargetName(this.getOption('target', '?.bemdecl.js'));
+        this._fromNode = this.getRequiredOption('node');
+        this._sourceTarget = node.unmaskNodeTargetName(this._fromNode, this.getOption('source', '?.bemdecl.js'));
     },
 
     getTargets: function () {
@@ -152,6 +129,5 @@ module.exports = inherit(BaseTech, {
 function requireBemdecl(data, filename) {
     if (data) { return vow.resolve(data); }
 
-    clearRequire(filename);
-    return asyncRequire(filename);
+    return fileEval(filename);
 }

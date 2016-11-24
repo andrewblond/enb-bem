@@ -3,8 +3,7 @@ var inherit = require('inherit'),
     enb = require('enb'),
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require'),
+    fileEval = require('file-eval'),
     deps = require('../lib/deps/deps');
 
 /**
@@ -50,27 +49,11 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        var _this = this,
-            logger = this.node.getLogger();
+        var node = this.node;
 
-        this._target = this.getOption('depsTarget');
-        if (this._target) {
-            logger.logOptionIsDeprecated(this.node.unmaskTargetName(this._target), 'enb-bem', this.getName(),
-                'depsTarget', 'target', ' It will be removed in v3.0.0.');
-        } else {
-            this._target = this.getOption('target', this.node.getTargetName('deps.js'));
-        }
-        this._target = this.node.unmaskTargetName(this._target);
-
-        this._sources = this.getOption('depsSources');
-        if (this._sources) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem', this.getName(),
-                'depsSources', 'sources', ' It will be removed in v3.0.0.');
-        } else {
-            this._sources = this.getRequiredOption('sources');
-        }
-        this._sources = this._sources.map(function (source) {
-            return _this.node.unmaskTargetName(source);
+        this._target = node.unmaskTargetName(this.getOption('target', node.getTargetName('deps.js')));
+        this._sources = this.getRequiredOption('sources').map(function (source) {
+            return node.unmaskTargetName(source);
         });
     },
 
@@ -109,8 +92,7 @@ module.exports = inherit(BaseTech, {
 
                             var filename = sourceFilenames[i];
 
-                            clearRequire(filename);
-                            return asyncRequire(filename)
+                            return fileEval(filename)
                                 .then(function (res) {
                                     return getDeps(res);
                                 });
@@ -130,9 +112,8 @@ module.exports = inherit(BaseTech, {
                         });
                 } else {
                     node.isValidTarget(target);
-                    clearRequire(targetFilename);
 
-                    return asyncRequire(targetFilename)
+                    return fileEval(targetFilename)
                         .then(function (result) {
                             node.resolveTarget(target, result);
                             return null;

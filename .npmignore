@@ -1,7 +1,0 @@
-.*
-appveyor.yml
-node_modules
-test
-benchmark
-coverage
-docs

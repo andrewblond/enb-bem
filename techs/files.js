@@ -1,10 +1,14 @@
-var inherit = require('inherit'),
+var fs = require('fs'),
+    path = require('path'),
+
+    inherit = require('inherit'),
     vow = require('vow'),
-    deps = require('../lib/deps/deps'),
     enb = require('enb'),
+    fileEval = require('file-eval'),
+    stringifyEntity = require('bem-naming').stringify,
+
+    deps = require('../lib/deps/deps'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
-    asyncRequire = require('enb-async-require'),
-    clearRequire = require('clear-require'),
     FileList = enb.FileList || require('enb/lib/file-list');
 
 /**
@@ -55,22 +59,12 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        var logger = this.node.getLogger();
+        var node = this.node;
 
-        this._filesTarget = this.node.unmaskTargetName(this.getOption('filesTarget', '?.files'));
-        this._dirsTarget = this.node.unmaskTargetName(this.getOption('dirsTarget', '?.dirs'));
-        this._levelsTarget = this.node.unmaskTargetName(this.getOption('levelsTarget', '?.levels'));
-
-        this._depsFile = this.getOption('depsTarget');
-        if (this._depsFile) {
-            logger.logOptionIsDeprecated(this._filesTarget, 'enb-bem', this.getName(),
-                'depsTarget', 'depsFile', ' It will be removed in v3.0.0.');
-            logger.logOptionIsDeprecated(this._dirsTarget, 'enb-bem', this.getName(),
-                'depsTarget', 'depsFile', ' It will be removed in v3.0.0.');
-        } else {
-            this._depsFile = this.getOption('depsFile', '?.deps.js');
-        }
-        this._depsFile = this.node.unmaskTargetName(this._depsFile);
+        this._filesTarget = node.unmaskTargetName(this.getOption('filesTarget', '?.files'));
+        this._dirsTarget = node.unmaskTargetName(this.getOption('dirsTarget', '?.dirs'));
+        this._levelsTarget = node.unmaskTargetName(this.getOption('levelsTarget', '?.levels'));
+        this._depsFile = node.unmaskTargetName(this.getOption('depsFile', '?.deps.js'));
     },
 
     getTargets: function () {
@@ -87,58 +81,59 @@ module.exports = inherit(BaseTech, {
             dirsTarget = this._dirsTarget;
 
         return this.node.requireSources([this._depsFile, this._levelsTarget])
-            .spread(function (data, levels) {
+            .spread(function (data, introspection) {
                 return requireSourceDeps(data, depsFilename)
                     .then(function (sourceDeps) {
                         var fileList = new FileList(),
                             dirList = new FileList(),
-                            levelPaths = levels.items.map(function (level) {
-                                return level.getPath();
-                            }),
-                            hash = {};
+                            uniqs = {};
 
-                        for (var i = 0, l = sourceDeps.length; i < l; i++) {
-                            var dep = sourceDeps[i],
-                                entities;
+                        var data = sourceDeps.map(function (entity) {
+                            var id = stringifyEntity(entity);
 
-                            if (dep.elem) {
-                                entities = levels.getElemEntities(dep.block, dep.elem, dep.mod, dep.val);
-                            } else {
-                                entities = levels.getBlockEntities(dep.block, dep.mod, dep.val);
+                            if (uniqs[id]) { return []; }
+                            uniqs[id] = true;
+
+                            var isMod = entity.modName;
+                            var commonModId;
+
+                            if (isMod && entity.modVal) {
+                                var commonMod = {
+                                    block: entity.block,
+                                    modName: entity.modName,
+                                    modVal: true
+                                };
+
+                                entity.elem && (commonMod.elem = entity.elem);
+
+                                commonModId = stringifyEntity(commonMod);
                             }
 
-                            slice(entities.files.filter(filter)).forEach(fileList.addFiles.bind(fileList));
-                            slice(entities.dirs.filter(filter)).forEach(dirList.addFiles.bind(dirList));
-                        }
-
-                        function slice(files) {
-                            var slices = levelPaths.map(function () { return []; }),
-                                uniqs = {};
-
-                            files.forEach(function iterate(file) {
-                                var filename = file.fullname;
-
-                                levelPaths.forEach(function (levelPath, index) {
-                                    if (!uniqs[filename] && filename.indexOf(levelPath) === 0) {
-                                        slices[index].push(file);
-                                        uniqs[filename] = true;
-                                    }
-                                });
+                            return introspection._introspections.map(function (levelIntrospection) {
+                                return (levelIntrospection[id] || levelIntrospection[commonModId] || []);
                             });
+                        });
 
-                            return slices;
-                        }
+                        var uniqFiles = {};
 
-                        function filter(file) {
-                            var filename = file.fullname;
+                        data.forEach(function (slices) {
+                            slices.forEach(function (slice) {
+                                var files = [];
+                                var dirs = [];
 
-                            if (hash[filename]) {
-                                return false;
-                            }
+                                slice.forEach(function (file) {
+                                    if (uniqFiles[file.path]) { return; }
+                                    uniqFiles[file.path] = true;
 
-                            hash[filename] = true;
-                            return true;
-                        }
+                                    var info = getFileInfo(file);
+
+                                    file.isDirectory ? dirs.push(info) : files.push(info);
+                                });
+
+                                fileList.addFiles(files);
+                                dirList.addFiles(dirs);
+                            });
+                        });
 
                         _this.node.resolveTarget(filesTarget, fileList);
                         _this.node.resolveTarget(dirsTarget, dirList);
@@ -149,16 +144,54 @@ module.exports = inherit(BaseTech, {
     clean: function () {}
 });
 
+/**
+ * Returns info about file for ENB FileList.
+ *
+ * @param {object} file - info about file.
+ * @returns {promise}
+ */
+function getFileInfo(file) {
+    var filename = file.path;
+    var isDirectory = file.isDirectory;
+    var info = {
+        fullname: filename,
+        name: path.basename(filename),
+        suffix: file.tech,
+        mtime: file.mtime,
+        isDirectory: isDirectory
+    };
+
+    if (!isDirectory) {
+        return info;
+    }
+
+    var basenames = fs.readdirSync(filename);
+
+    info.files = basenames.map(function (basename) {
+        return FileList.getFileInfo(path.join(filename, basename));
+    });
+
+    return info;
+}
+
 function requireSourceDeps(data, filename) {
-    return (data ? vow.resolve(data) : (
-            clearRequire(filename),
-            asyncRequire(filename)
-        ))
+    return (data ? vow.resolve(data) : fileEval(filename))
         .then(function (sourceDeps) {
             if (sourceDeps.blocks) {
                 return deps.fromBemdecl(sourceDeps.blocks);
             }
 
             return Array.isArray(sourceDeps) ? sourceDeps : sourceDeps.deps;
+        })
+        .then(function (sourceDeps) {
+            return sourceDeps.map(function (dep) {
+                var entity = { block: dep.block };
+
+                dep.elem && (entity.elem = dep.elem);
+                dep.mod && (entity.modName = dep.mod);
+                dep.val && (entity.modVal = dep.val);
+
+                return entity;
+            });
         });
 }
