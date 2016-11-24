@@ -37,31 +37,34 @@
     "Marat Dulin <mdevils@yandex.ru>"
   ],
   "engines": {
-    "node": ">= 0.10.0"
+    "node": ">= 4"
   },
   "peerDependencies": {
     "enb": ">=0.15.0 <2.0.0"
   },
   "dependencies": {
-    "bem-naming": "1.0.0",
+    "bem-decl": "^0.2.3",
+    "bem-naming": "1.0.1",
+    "bem-walk": "1.0.0-1",
     "clear-require": "1.0.1",
     "enb-async-require": "1.0.1",
     "enb-require-or-eval": "1.0.2",
     "inherit": "2.2.3",
     "js-yaml": "3.5.2",
+    "lodash": "4.11.1",
     "vow": "0.4.12"
   },
   "devDependencies": {
     "enb": ">=0.15.0 <2.0.0",
+    "gulp-eval": "1.0.0-0",
     "istanbul": "0.4.2",
     "jscs": "2.8.0",
     "jshint": "2.9.1",
-    "lodash": "4.0.0",
-    "matcha": "0.6.1",
     "mocha": "2.3.4",
-    "mock-enb": "0.3.0",
-    "mock-fs": "3.6.0",
+    "mock-enb": "0.3.2",
+    "mock-fs": "3.8.0",
     "must": "0.13.1",
+    "proxyquire": "1.7.4",
     "seedrandom": "2.4.2"
   },
   "main": "index.js",
