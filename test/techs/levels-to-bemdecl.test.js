@@ -1,8 +1,11 @@
 var vow = require('vow'),
+
     mockFs = require('mock-fs'),
     TestNode = require('mock-enb/lib/mock-node'),
-    levelsTech = require('../../techs/levels'),
-    levelsToBemdeclTech = require('../../techs/levels-to-bemdecl');
+
+    techs = require('../utils/techs'),
+    levelsTech = techs.levels,
+    levelsToBemdeclTech = techs.levelsToBemdecl;
 
 describe('techs: levels-to-bemdecl', function () {
     afterEach(function () {
@@ -46,7 +49,6 @@ describe('techs: levels-to-bemdecl', function () {
                 }
             },
             bemdecl = [
-                { name: 'block' },
                 { name: 'block', mods: [{ name: 'bool-mod', vals: [{ name: true }] }] }
             ];
 
@@ -64,7 +66,6 @@ describe('techs: levels-to-bemdecl', function () {
                 }
             },
             bemdecl = [
-                { name: 'block' },
                 { name: 'block', mods: [{ name: 'mod-name', vals: [{ name: 'mod-val' }] }] }
             ];
 
@@ -82,7 +83,6 @@ describe('techs: levels-to-bemdecl', function () {
                 }
             },
             bemdecl = [
-                { name: 'block' },
                 { name: 'block', elems: [{ name: 'elem-name' }] }
             ];
 
@@ -102,8 +102,6 @@ describe('techs: levels-to-bemdecl', function () {
                 }
             },
             bemdecl = [
-                { name: 'block' },
-                { name: 'block', elems: [{ name: 'elem-name' }] },
                 { name: 'block', elems: [
                     { name: 'elem-name', mods: [{ name: 'bool-mod', vals: [{ name: true }] }] }
                 ] }
@@ -125,8 +123,6 @@ describe('techs: levels-to-bemdecl', function () {
                 }
             },
             bemdecl = [
-                { name: 'block' },
-                { name: 'block', elems: [{ name: 'elem-name' }] },
                 { name: 'block', elems: [{
                     name: 'elem-name',
                     mods: [{ name: 'mod-name', vals: [{ name: 'mod-val' }] }]
