@@ -1,10 +1,13 @@
-var inherit = require('inherit'),
-    vow = require('vow'),
+var vow = require('vow'),
+    inherit = require('inherit'),
     enb = require('enb'),
-    vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
-    BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
     asyncRequire = require('enb-async-require'),
     clearRequire = require('clear-require'),
+
+    vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
+    FileList = enb.FileList,
+    BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
+
     OldDeps = require('../exlib/deps-old').OldDeps,
     deps = require('../lib/deps/deps');
 
@@ -51,30 +54,12 @@ module.exports = inherit(BaseTech, {
     },
 
     configure: function () {
-        var logger = this.node.getLogger();
+        var node = this.node;
 
-        this._target = this.getOption('depsTarget');
-        if (this._target) {
-            logger.logOptionIsDeprecated(this.node.unmaskTargetName(this._target), 'enb-bem-techs', this.getName(),
-                'depsTarget', 'target', ' It will be removed in v3.0.0.');
-        } else {
-            this._target = this.getOption('target', this.node.getTargetName('deps.js'));
-        }
-        this._target = this.node.unmaskTargetName(this._target);
-
-        this._declFile = this.getOption('bemdeclTarget');
-        if (this._declFile) {
-            logger.logOptionIsDeprecated(this._target, 'enb-bem-techs', this.getName(),
-                'bemdeclTarget', 'bemdeclFile', ' It will be removed in v3.0.0.');
-        } else {
-            this._declFile = this.getOption('bemdeclFile', this.node.getTargetName('bemdecl.js'));
-        }
-        this._declFile = this.node.unmaskTargetName(this._declFile);
-
-        this._levelsTarget = this.node.unmaskTargetName(
-            this.getOption('levelsTarget', this.node.getTargetName('levels')));
-
+        this._target = node.unmaskTargetName(this.getOption('target', node.getTargetName('deps.js')));
         this._strict = this.getOption('strict');
+        this._declFile = node.unmaskTargetName(this.getOption('bemdeclFile', node.getTargetName('bemdecl.js')));
+        this._levelsTarget = node.unmaskTargetName(this.getOption('levelsTarget', node.getTargetName('levels')));
     },
 
     getTargets: function () {
@@ -91,8 +76,9 @@ module.exports = inherit(BaseTech, {
             strictMode = this._strict;
 
         return node.requireSources([this._levelsTarget, this._declFile])
-            .spread(function (levels, sourceDeps) {
-                var depFiles = levels.getFilesBySuffix('deps.js');
+            .spread(function (introspection, sourceDeps) {
+                var depFiles = introspection.getFilesByTechs(['deps.js', 'deps.yaml'])
+                        .map(file => FileList.getFileInfo(file.path));
 
                 if (cache.needRebuildFile('deps-file', targetFilename) ||
                     cache.needRebuildFile('decl-file', declFilename) ||
@@ -100,7 +86,7 @@ module.exports = inherit(BaseTech, {
                 ) {
                     return requireSourceDeps(sourceDeps, declFilename)
                         .then(function (sourceDeps) {
-                            return (new OldDeps(sourceDeps, strictMode).expandByFS({ levels: levels }))
+                            return (new OldDeps(sourceDeps, strictMode).expandByFS({ levels: introspection }))
                                 .then(function (resolvedDeps) {
                                     var resultDeps = resolvedDeps.getDeps(),
                                         loopPaths = resolvedDeps.getLoops().mustDeps.map(function (loop) {

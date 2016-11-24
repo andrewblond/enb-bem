@@ -15,5 +15,9 @@ module.exports = {
 
     mergeBemdecl: require('./techs/merge-bemdecl'),
     mergeDeps: require('./techs/merge-deps'),
+
+    intersectBemdecl: require('./techs/intersect-bemdecl'),
+    intersectDeps: require('./techs/intersect-deps'),
+
     subtractDeps: require('./techs/subtract-deps')
 };

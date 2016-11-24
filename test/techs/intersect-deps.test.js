@@ -4,9 +4,9 @@ var path = require('path'),
     mockFs = require('mock-fs'),
     TestNode = require('mock-enb/lib/mock-node'),
 
-    Tech = require('../utils/techs').mergeDeps;
+    Tech = require('../utils/techs').intersectDeps;
 
-describe('techs: merge-deps', function () {
+describe('techs: intersect-deps', function () {
     afterEach(function () {
         mockFs.restore();
     });
@@ -19,13 +19,12 @@ describe('techs: merge-deps', function () {
         var bundle = new TestNode('bundle');
 
         bundle.provideTechData('bundle-1.deps.js', { deps: [{ block: 'block-1' }] });
-        bundle.provideTechData('bundle-2.deps.js', { deps: [{ block: 'block-2' }] });
+        bundle.provideTechData('bundle-2.deps.js', { deps: [{ block: 'block-1' }, { block: 'block-2' }] });
 
         return bundle.runTech(Tech, { sources: ['bundle-1.deps.js', 'bundle-2.deps.js'] })
             .then(function (target) {
                 target.deps.must.eql([
-                    { block: 'block-1' },
-                    { block: 'block-2' }
+                    { block: 'block-1' }
                 ]);
             });
     });
@@ -38,13 +37,12 @@ describe('techs: merge-deps', function () {
         var bundle = new TestNode('bundle');
 
         bundle.provideTechData('bundle-1.deps.js', [{ block: 'block-1' }]);
-        bundle.provideTechData('bundle-2.deps.js', [{ block: 'block-2' }]);
+        bundle.provideTechData('bundle-2.deps.js', [{ block: 'block-1' }, { block: 'block-2' }]);
 
         return bundle.runTech(Tech, { sources: ['bundle-1.deps.js', 'bundle-2.deps.js'] })
             .then(function (target) {
                 target.deps.must.eql([
-                    { block: 'block-1' },
-                    { block: 'block-2' }
+                    { block: 'block-1' }
                 ]);
             });
     });
@@ -77,79 +75,10 @@ describe('techs: merge-deps', function () {
 
     it('must support BEMDECL', function () {
         var decl1 = [{ name: 'block-1' }],
-            decl2 = [{ name: 'block-2' }],
+            decl2 = [{ name: 'block-1' }, { name: 'block-2' }],
             expected = [
-                { block: 'block-1' },
-                { block: 'block-2' }
+                { block: 'block-1' }
             ];
-
-        return assert([decl1, decl2], expected);
-    });
-
-    it('must merge block with mod of block', function () {
-        var decl1 = [{ block: 'block' }],
-            decl2 = [{ block: 'block', mod: 'mod-name', val: 'mod-val' }],
-            expected = [
-                { block: 'block' },
-                { block: 'block', mod: 'mod-name', val: 'mod-val' }
-            ];
-
-        return assert([decl1, decl2], expected);
-    });
-
-    it('must merge block with elem', function () {
-        var decl1 = [{ block: 'block' }],
-            decl2 = [{ block: 'block', elem: 'elem' }],
-            expected = [
-                { block: 'block' },
-                { block: 'block', elem: 'elem' }
-            ];
-
-        return assert([decl1, decl2], expected);
-    });
-
-    it('must merge elem with mod of elem', function () {
-        var decl1 = [{ block: 'block', elem: 'elem' }],
-            decl2 = [{ block: 'block', elem: 'elem', mod: 'mod-name', val: 'mod-val' }],
-            expected = [
-                { block: 'block', elem: 'elem' },
-                { block: 'block', elem: 'elem', mod: 'mod-name', val: 'mod-val' }
-            ];
-
-        return assert([decl1, decl2], expected);
-    });
-
-    it('must merge elems of block', function () {
-        var decl1 = [{ block: 'block', elem: 'elem-1' }],
-            decl2 = [{ block: 'block', elem: 'elem-2' }],
-            expected = [
-                { block: 'block', elem: 'elem-1' },
-                { block: 'block', elem: 'elem-2' }
-            ];
-
-        return assert([decl1, decl2], expected);
-    });
-
-    it('must merge set with empty set', function () {
-        var decl1 = [],
-            decl2 = [{ block: '1' }, { block: '2' }, { block: '3' }],
-            expected = [{ block: '1' }, { block: '2' }, { block: '3' }];
-
-        return assert([decl1, decl2], expected);
-    });
-
-    it('must merge intersecting sets', function () {
-        var decl1 = [{ block: '1' }, { block: '2' }, { block: '3' }],
-            decl2 = [{ block: '2' }],
-            expected = [{ block: '1' }, { block: '2' }, { block: '3' }];
-
-        return assert([decl1, decl2], expected);
-    });
-
-    it('must merge disjoint sets', function () {
-        var decl1 = [{ block: '1' }, { block: '2' }, { block: '3' }],
-            decl2 = [{ block: 'O_o' }],
-            expected = [{ block: '1' }, { block: '2' }, { block: '3' }, { block: 'O_o' }];
 
         return assert([decl1, decl2], expected);
     });

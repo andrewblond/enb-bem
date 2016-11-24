@@ -5,10 +5,14 @@
  * Заимствованный.
  */
 
-var inherit = require('inherit');
-var vowFs = require('enb/lib/fs/async-fs');
 var vm = require('vm');
-var Vow = require('vow');
+
+var enb = require('enb');
+var vow = require('vow');
+var inherit = require('inherit');
+var stringifyEntity = require('bem-naming').stringify;
+
+var vowFs = enb.asyncFs || require('enb/lib/fs/async-fs');
 var MustDeps = require('./must-deps');
 
 module.exports.OldDeps = (function () {
@@ -185,13 +189,13 @@ module.exports.OldDeps = (function () {
             var depsCount1 = this.getCount();
             var depsCount2;
 
-            return Vow.when(this.expandOnceByFS())
+            return vow.when(this.expandOnceByFS())
                 .then(function again(newDeps) {
 
                     depsCount2 = newDeps.getCount();
                     if (depsCount1 !== depsCount2) {
                         depsCount1 = depsCount2;
-                        return Vow.when(newDeps.expandOnceByFS(), again);
+                        return vow.when(newDeps.expandOnceByFS(), again);
                     }
 
                     return newDeps.clone(_this);
@@ -228,7 +232,7 @@ module.exports.OldDeps = (function () {
                     return newDeps;
                 });
             } else {
-                return Vow.fulfill(newDeps);
+                return vow.fulfill(newDeps);
             }
         },
 
@@ -243,66 +247,35 @@ module.exports.OldDeps = (function () {
             var _this = this;
             var tech = this.tech;
 
-            var files = tech.levels.getFilesByDecl(item.item.block, item.item.elem, item.item.mod, item.item.val)
+            var dep = item.item;
+            var entity = { block: dep.block };
+
+            dep.elem && (entity.elem = dep.elem);
+            dep.mod && (entity.modName = dep.mod);
+            dep.val && (entity.modVal = dep.val);
+
+            var files = tech.levels.getFilesByEntity(entity)
                 .filter(function (file) {
-                    return file.suffix === 'deps.js';
+                    return file.tech === 'deps.js';
                 });
 
-            var promise = Vow.fulfill();
+            var promise = vow.fulfill();
 
             files.forEach(function (file) {
+                var filename = file.path;
+
                 promise = promise.then(function () {
-                    return vowFs.read(file.fullname, 'utf8').then(function (content) {
+                    return vowFs.read(filename, 'utf8').then(function (content) {
                         try {
-                            _this.parse(vm.runInThisContext(content, file.fullname), item);
+                            _this.parse(vm.runInThisContext(content, filename), item);
                         } catch (e) {
-                            throw new Error('Syntax error in file "' + file.fullname + '": ' + e.message);
+                            throw new Error('Syntax error in file "' + filename + '": ' + e.message);
                         }
                     });
                 });
             });
 
             return promise;
-        },
-
-        /**
-         * Вычитает зависимости из переданного OldDeps.
-         *
-         * @param {OldDeps} deps
-         * @returns {OldDeps}
-         */
-        subtract: function (deps) {
-            var fromItems = this.items,
-                itemsToSubstract = deps.items;
-
-            for (var key in itemsToSubstract) {
-                if (key && itemsToSubstract.hasOwnProperty(key)) {
-                    delete fromItems[key];
-                }
-            }
-            return this;
-        },
-
-        /**
-         * Сохраняет пересечение с другим OldDeps.
-         *
-         * @param {OldDeps} deps
-         * @returns {OldDeps}
-         */
-        intersect: function (deps) {
-            var selfItems = this.items,
-                anotherItems = deps.items,
-                newItems = {};
-
-            for (var key in anotherItems) {
-                if ((anotherItems.hasOwnProperty(key) && selfItems.hasOwnProperty(key)) || !key) {
-                    newItems[key] = selfItems[key];
-                }
-            }
-
-            this.items = newItems;
-
-            return this;
         },
 
         /**
@@ -388,20 +361,6 @@ module.exports.OldDeps = (function () {
         },
 
         /**
-         * Вызывает map для набора зависимостей.
-         *
-         * @param {Function} fn
-         * @returns {Array}
-         */
-        map: function (fn) {
-            var mapped = [];
-            this.forEach(function (item) {
-                mapped.push(fn.call(this, item));
-            });
-            return mapped;
-        },
-
-        /**
          * Фильтрует зависимости, возвращает результат.
          * @param {Function} fn
          * @returns {Array}
@@ -433,27 +392,6 @@ module.exports.OldDeps = (function () {
                 }
             });
             return byTech;
-        },
-
-        /**
-         * Сериализует в строку.
-         *
-         * @returns {String}
-         */
-        stringify: function () {
-            var result = [];
-            var deps = this.serialize();
-
-            if (deps['']) {
-                result.push('exports.deps = ' + JSON.stringify(deps[''][''], null, 4) + ';\n');
-                delete deps[''][''];
-            } else {
-                result.push('exports.deps = [];\n');
-            }
-
-            isEmptyObject(deps) || result.push('exports.depsByTechs = ' + JSON.stringify(deps, null, 4) + ';\n');
-
-            return result.join('');
         },
 
         /**
@@ -540,45 +478,6 @@ module.exports.OldDeps = (function () {
             result.mustDeps = this.mustDeps.concat();
             this.hasOwnProperty('key') && (result.key = this.key);
             return result;
-        },
-
-        /**
-         * Расширяет зависимость.
-         *
-         * @param {OldDepsItem} item
-         * @returns {OldDepsItem}
-         */
-        extend: function (item) {
-            if (!item) {
-                return this;
-            }
-            var depsTypes = ['mustDeps', 'shouldDeps'],
-                depsType,
-                thisDeps,
-                itemDeps;
-
-            while (depsType = depsTypes.shift()) {
-                itemDeps = item[depsType] || (item[depsType] = {});
-                if (thisDeps = this.item[depsType]) {
-                    for (var dependency in thisDeps) {
-                        if (thisDeps.hasOwnProperty(dependency)) {
-                            (itemDeps[dependency] = thisDeps[dependency].extend(itemDeps[dependency]));
-                        }
-                    }
-                }
-            }
-            return item;
-        },
-
-        /**
-         * Записывает зависимость в кэш по ключу.
-         *
-         * @param {Object} cache
-         * @returns {OldDepsItem}
-         */
-        cache: function (cache) {
-            var key = this.buildKey();
-            return cache[key] = this.extend(cache[key]);
         },
 
         /**

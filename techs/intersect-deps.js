@@ -8,52 +8,54 @@ var inherit = require('inherit'),
     deps = require('../lib/deps/deps');
 
 /**
- * @class MergeDepsTech
+ * @class IntersectDepsTech
  * @augments {BaseTech}
  * @classdesc
  *
- * Merges DEPS files and BEMDECL files in one.
+ * Intersects DEPS files and BEMDECL files in one.
  *
- * It could be necessary to build the merged bundle.
+ * It could be necessary to build the common bundle.
  *
  * @param {Object}    options                          Options.
- * @param {String[]}  options.sources                  Paths to DEPS or BEMDECL files for merge.
- * @param {String}    [options.target='?.bemdecl.js']  Path to merged DEPS file.
+ * @param {String[]}  options.sources                  Paths to DEPS or BEMDECL files for intersect.
+ * @param {String}    [options.target='?.bemdecl.js']  Path to intersected DEPS file.
  *
  * @example
  * // Nodes in file system before build:
- * // merged-bundle/
+ * // common-bundle/
  * // ├── bundle-1.deps.js
  * // └── bundle-2.deps.js
  * //
  * // After build:
- * // merged-bundle/
+ * // common-bundle/
  * // ├── bundle-1.deps.js
  * // ├── bundle-2.deps.js
- * // └── merged-bundle.deps.js
+ * // └── common-bundle.deps.js
  *
  * var bemTechs = require('enb-bem-techs');
  *
  * module.exports = function(config) {
- *     config.node('merged-bundle', function(node) {
+ *     config.node('common-bundle', function(node) {
  *         node.addTech([bemTechs.mergeDeps, {
  *             sources: ['bundle-1.deps.js', 'bundle-2.deps.js'],
- *             target: 'merged-bundle.deps.js'
+ *             target: 'common-bundle.deps.js'
  *         }]);
- *         node.addTarget('merged-bundle.deps.js');
+ *         node.addTarget('common-bundle.deps.js');
  *     });
  * };
  */
 module.exports = inherit(BaseTech, {
     getName: function () {
-        return 'merge-deps';
+        return 'intersect-deps';
     },
 
     configure: function () {
-        var node = this.node;
+        var node = this.node,
+            target = this.getOption('target', node.getTargetName('deps.js')),
+            sources = this.getRequiredOption('sources');
 
-        this._target = node.unmaskTargetName(this.getOption('target', node.getTargetName('deps.js')));
-        this._sources = this.getRequiredOption('sources').map(function (source) {
+        this._target = node.unmaskTargetName(target);
+        this._sources = sources.map(function (source) {
             return node.unmaskTargetName(source);
         });
     },
@@ -63,8 +65,7 @@ module.exports = inherit(BaseTech, {
     },
 
     build: function () {
-        var _this = this,
-            node = this.node,
+        var node = this.node,
             target = this._target,
             sources = this._sources,
             cache = node.getNodeCache(target),
@@ -73,7 +74,7 @@ module.exports = inherit(BaseTech, {
                 return node.resolvePath(sourceTarget);
             });
 
-        return this.node.requireSources(sources)
+        return node.requireSources(sources)
             .then(function (sourceDeps) {
                 var rebuildNeeded = cache.needRebuildFile('deps-file', targetFilename);
 
@@ -100,8 +101,8 @@ module.exports = inherit(BaseTech, {
                                 });
                         }))
                         .then(function (sourceDeps) {
-                            var mergedDeps = deps.merge(sourceDeps),
-                                str = 'exports.deps = ' + JSON.stringify(mergedDeps, null, 4) + ';';
+                            var intersectedDeps = deps.intersect(sourceDeps),
+                                str = 'exports.deps = ' + JSON.stringify(intersectedDeps, null, 4) + ';';
 
                             return vfs.write(targetFilename, str, 'utf-8')
                                 .then(function () {
@@ -109,7 +110,7 @@ module.exports = inherit(BaseTech, {
                                     sourceFilenames.forEach(function (filename) {
                                         cache.cacheFileInfo(filename, filename);
                                     });
-                                    _this.node.resolveTarget(target, { deps: mergedDeps });
+                                    node.resolveTarget(target, { deps: intersectedDeps });
                                 });
                         });
                 } else {
