@@ -39,7 +39,7 @@ $ npm install --save-dev enb-bem-techs
 ------------
 
 * [API технологий](docs/api.ru.md)
-* [Как устроены БЭМ-проекты](docs/bem-project.md)
+* [Организация файловой структуры](https://ru.bem.info/methodology/filesystem/)
 * [Сборка бандла](docs/build-bundle.md)
 * [Сборка страницы](docs/build-page.md)
 * [Сборка merged-бандла](docs/build-merged-bundle.md)
