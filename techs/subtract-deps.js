@@ -79,7 +79,9 @@ module.exports = inherit(BaseTech, {
         } else {
             this._whatTarget = this.getRequiredOption('what');
         }
-        this._whatTarget = node.unmaskTargetName(this._whatTarget);
+        if (typeof this._whatTarget === 'string') {
+            this._whatTarget = node.unmaskTargetName(this._whatTarget);
+        }
     },
 
     getTargets: function () {
@@ -92,22 +94,29 @@ module.exports = inherit(BaseTech, {
             cache = node.getNodeCache(target),
             targetFilename = node.resolvePath(target),
             fromFilename = node.resolvePath(this._fromTarget),
-            whatFilename = node.resolvePath(this._whatTarget);
+            whatTarget = this._whatTarget,
+            isWhatFile = typeof whatTarget === 'string',
+            whatFilename;
 
-        return this.node.requireSources([this._fromTarget, this._whatTarget])
+            if (isWhatFile) {
+                whatFilename = node.resolvePath(this._whatTarget);
+            }
+
+        return this.node.requireSources(isWhatFile ? [this._fromTarget, this._whatTarget] : [this._fromTarget])
             .spread(function (fromDeps, whatDeps) {
                 if (cache.needRebuildFile('deps-file', targetFilename) ||
                     cache.needRebuildFile('deps-from-file', fromFilename) ||
-                    cache.needRebuildFile('deps-what-file', whatFilename)
+                    (isWhatFile && cache.needRebuildFile('deps-what-file', whatFilename))
                 ) {
                     return vow.all([
                             requireDeps(fromDeps, fromFilename),
-                            requireDeps(whatDeps, whatFilename)
+                            isWhatFile ? requireDeps(whatDeps, whatFilename) : whatTarget
                         ])
                         .spread(function (from, what) {
                             var fromDeps = Array.isArray(from) ? from : from.deps,
-                                whatDeps = Array.isArray(what) ? what : what.deps,
-                                subtractedDeps = deps.subtract(fromDeps, whatDeps),
+                                whatDeps = Array.isArray(what) ? what : what.deps;
+
+                            var subtractedDeps = deps.subtract(fromDeps, whatDeps),
                                 str = 'exports.deps = ' + JSON.stringify(subtractedDeps, null, 4) + ';';
 
                             return vfs.write(targetFilename, str, 'utf-8')
