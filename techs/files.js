@@ -5,14 +5,13 @@ var fs = require('fs'),
     vow = require('vow'),
     enb = require('enb'),
     fileEval = require('file-eval'),
+    bemDecl = require('@bem/sdk.decl'),
     stringifyEntity = require('@bem/sdk.naming.entity.stringify')({
         delims: {
             elem: '__',
             mod: { name: '_', val: '_' }
         }
     }),
-
-    deps = require('../lib/deps/deps'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
     FileList = enb.FileList || require('enb/lib/file-list');
 
@@ -99,14 +98,15 @@ module.exports = inherit(BaseTech, {
                             if (uniqs[id]) { return []; }
                             uniqs[id] = true;
 
-                            var isMod = entity.modName;
                             var commonModId;
 
-                            if (isMod && entity.modVal) {
+                            if (entity.mod && entity.mod.val) {
                                 var commonMod = {
                                     block: entity.block,
-                                    modName: entity.modName,
-                                    modVal: true
+                                    mod: {
+                                        name: entity.mod.name,
+                                        val: true
+                                    }
                                 };
 
                                 entity.elem && (commonMod.elem = entity.elem);
@@ -182,27 +182,15 @@ function getFileInfo(file) {
 function requireSourceDeps(data, filename) {
     return (data ? vow.resolve(data) : fileEval(filename))
         .then(function (sourceDeps) {
-            if (sourceDeps.blocks) {
-                return deps.fromBemdecl(sourceDeps.blocks);
+            if (Array.isArray(sourceDeps)) {
+                sourceDeps = { deps: sourceDeps };
             }
 
-            return Array.isArray(sourceDeps) ? sourceDeps : sourceDeps.deps;
+            return bemDecl.parse(sourceDeps);
         })
         .then(function (sourceDeps) {
-            return sourceDeps.map(function (dep) {
-                var entity = { block: dep.block };
-
-                dep.elem && (entity.elem = dep.elem);
-
-                // if (dep.mod) {
-                //     entity.mod = { name: dep.mod };
-                //     dep.val && (entity.mod.val = dep.val);
-                // }
-
-                dep.mod && (entity.modName = dep.mod);
-                dep.val && (entity.modVal = dep.val);
-
-                return entity;
+            return sourceDeps.map(function (cell) {
+                return cell.entity;
             });
         });
 }
