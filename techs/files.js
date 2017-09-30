@@ -6,12 +6,8 @@ var fs = require('fs'),
     enb = require('enb'),
     fileEval = require('file-eval'),
     bemDecl = require('@bem/sdk.decl'),
-    stringifyEntity = require('@bem/sdk.naming.entity.stringify')({
-        delims: {
-            elem: '__',
-            mod: { name: '_', val: '_' }
-        }
-    }),
+    originNamingPreset = require('@bem/sdk.naming.presets').origin,
+    stringifyEntity = require('@bem/sdk.naming.entity.stringify')(originNamingPreset),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
     FileList = enb.FileList || require('enb/lib/file-list');
 
