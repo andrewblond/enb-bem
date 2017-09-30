@@ -3,7 +3,7 @@ var inherit = require('inherit'),
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
     fileEval = require('file-eval'),
-    deps = require('../lib/deps/deps');
+    bemDecl = require('@bem/sdk.decl');
 
 /**
  * @class BemjsonToBemdeclTech
@@ -67,14 +67,17 @@ module.exports = inherit(BaseTech, {
                             var bemjsonDeps = getDepsFromBemjson(bemjson),
                                 decl,
                                 data,
-                                str;
+                                str,
+                                cells;
 
+                            // bemdeclFormat: 'deps', 'bemdecl'
                             if (bemdeclFormat === 'deps') {
                                 decl = bemjsonDeps;
                                 data = { deps: decl };
                                 str = 'exports.deps = ' + JSON.stringify(decl, null, 4) + ';\n';
                             } else {
-                                decl = deps.toBemdecl(bemjsonDeps),
+                                cells = bemDecl.normalize(bemjsonDeps, { format: 'enb' });
+                                decl = bemDecl.format(cells, { format: 'v1' });
                                 data = { blocks: decl };
                                 str = 'exports.blocks = ' + JSON.stringify(decl, null, 4) + ';\n';
                             }
