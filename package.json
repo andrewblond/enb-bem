@@ -43,9 +43,9 @@
     "enb": ">=0.15.0 <2.0.0"
   },
   "dependencies": {
-    "@bem/sdk.decl": "0.1.0-alpha.21b40d0b",
-    "@bem/sdk.deps": "0.1.0-alpha.21b40d0b",
-    "@bem/sdk.naming.entity.stringify": "0.1.0-alpha.21b40d0b",
+    "@bem/sdk.decl": "0.1.0",
+    "@bem/sdk.deps": "0.1.0",
+    "@bem/sdk.naming.entity.stringify": "0.1.0",
     "bem-naming": "1.0.1",
     "bem-walk": "1.0.0-1",
     "file-eval": "1.0.0",
