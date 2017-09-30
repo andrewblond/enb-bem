@@ -5,7 +5,12 @@ var fs = require('fs'),
     vow = require('vow'),
     enb = require('enb'),
     fileEval = require('file-eval'),
-    stringifyEntity = require('bem-naming').stringify,
+    stringifyEntity = require('@bem/sdk.naming.entity.stringify')({
+        delims: {
+            elem: '__',
+            mod: { name: '_', val: '_' }
+        }
+    }),
 
     deps = require('../lib/deps/deps'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
@@ -188,6 +193,12 @@ function requireSourceDeps(data, filename) {
                 var entity = { block: dep.block };
 
                 dep.elem && (entity.elem = dep.elem);
+
+                // if (dep.mod) {
+                //     entity.mod = { name: dep.mod };
+                //     dep.val && (entity.mod.val = dep.val);
+                // }
+
                 dep.mod && (entity.modName = dep.mod);
                 dep.val && (entity.modVal = dep.val);
 
