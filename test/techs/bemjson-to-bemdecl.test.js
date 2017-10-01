@@ -37,7 +37,7 @@ describe('techs: bemjson-to-bemdecl', function () {
     it('must detect mod of block', function () {
         var bemjson = { block: 'block', mods: { 'mod-name': 'mod-val' } },
             bemdecl = [
-                { name: 'block', mods: [{ name: 'mod-name', vals: [{ name: 'mod-val' }] }] }
+                { name: 'block', mods: [{ name: 'mod-name', vals: [{ name: true }, { name: 'mod-val' }] }] }
             ];
 
         return assert(bemjson, bemdecl);
@@ -63,7 +63,7 @@ describe('techs: bemjson-to-bemdecl', function () {
         var bemjson = { block: 'block', elem: 'elem', elemMods: { 'mod-name': 'mod-val' } },
             bemdecl = [
                 { name: 'block', elems: [{ name: 'elem', mods: [
-                    { name: 'mod-name', vals: [{ name: 'mod-val' }] }]
+                    { name: 'mod-name', vals: [{ name: true }, { name: 'mod-val' }] }]
                 }] }
             ];
 
@@ -172,7 +172,7 @@ describe('techs: bemjson-to-bemdecl', function () {
                 { block: 'block', mods: { 'mod-name': 'mod-val' } }
             ],
             bemdecl = [
-                { name: 'block', mods: [{ name: 'mod-name', vals: [{ name: 'mod-val' }] }] }
+                { name: 'block', mods: [{ name: 'mod-name', vals: [{ name: true }, { name: 'mod-val' }] }] }
             ];
 
         return assert(bemjson, bemdecl);
