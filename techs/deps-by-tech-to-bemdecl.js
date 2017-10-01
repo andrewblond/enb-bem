@@ -1,6 +1,6 @@
 var inherit = require('inherit'),
-    vm = require('vm'),
     naming = require('bem-naming'),
+    nodeEval = require('node-eval'),
     vow = require('vow'),
     enb = require('enb'),
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
@@ -94,7 +94,7 @@ module.exports = inherit(BaseTech, {
                             depIndex = {};
 
                         depResults.forEach(function (depResult) {
-                            var fileDeps = vm.runInThisContext(depResult.text),
+                            var fileDeps = nodeEval(depResult.text),
                                 bemname = depResult.file.name.split('.')[0],
                                 notation = naming.parse(bemname);
 
