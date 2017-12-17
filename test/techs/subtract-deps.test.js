@@ -81,7 +81,7 @@ describe('techs: subtract-deps', function () {
         return assert(from, what, expected);
     });
 
-    it('must subtract mod of elem from elem', function () {
+    it.skip('must subtract mod of elem from elem', function () {
         var from = [{ block: 'block', elem: 'elem' }],
             what = [{ block: 'block', elem: 'elem', mod: 'mod-name', val: 'mod-val' }],
             expected = [{ block: 'block', elem: 'elem' }];

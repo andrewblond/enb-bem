@@ -4,7 +4,7 @@ var inherit = require('inherit'),
     vfs = enb.asyncFS || require('enb/lib/fs/async-fs'),
     BaseTech = enb.BaseTech || require('enb/lib/tech/base-tech'),
     fileEval = require('file-eval'),
-    deps = require('../lib/deps/deps');
+    bemDecl = require('@bem/sdk.decl');
 
 /**
  * @class SubtractDepsTech
@@ -80,9 +80,15 @@ module.exports = inherit(BaseTech, {
                             requireDeps(whatDeps, whatFilename)
                         ])
                         .spread(function (from, what) {
-                            var fromDeps = Array.isArray(from) ? from : from.deps,
-                                whatDeps = Array.isArray(what) ? what : what.deps,
-                                subtractedDeps = deps.subtract(fromDeps, whatDeps),
+                            var fromDeps = Array.isArray(from) ? { deps: from } : from,
+                                whatDeps = Array.isArray(what) ? { deps: what } : what,
+                                subtractedDeps = bemDecl.format(
+                                    bemDecl.subtract(
+                                        bemDecl.parse(fromDeps),
+                                        bemDecl.parse(whatDeps)
+                                    ),
+                                    { format: 'enb' }
+                                ),
                                 str = 'exports.deps = ' + JSON.stringify(subtractedDeps, null, 4) + ';';
 
                             return vfs.write(targetFilename, str, 'utf-8')
