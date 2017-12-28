@@ -1,4 +1,6 @@
-var inherit = require('inherit'),
+var path = require('path'),
+
+    inherit = require('inherit'),
     vow = require('vow'),
     deps = require('../lib/deps/deps'),
     enb = require('enb'),
@@ -119,7 +121,7 @@ module.exports = inherit(BaseTech, {
                                 var filename = file.fullname;
 
                                 levelPaths.forEach(function (levelPath, index) {
-                                    if (!uniqs[filename] && filename.indexOf(levelPath) === 0) {
+                                    if (!uniqs[filename] && filename.indexOf(levelPath + path.sep) === 0) {
                                         slices[index].push(file);
                                         uniqs[filename] = true;
                                     }
