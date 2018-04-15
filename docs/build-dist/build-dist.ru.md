@@ -43,8 +43,9 @@ touch-pad.blocks/    # уровень для тач-фонов
 
     ```js
     var techs = require('enb-bem-techs'),
-        css = require('enb/techs/css'),
-        js = require('enb/techs/js'),
+        path = require('path'),
+        css = require('enb-css/techs/css'),
+        js = require('enb-js/techs/browser-js'),
         levels = {
             'desktop': ['common.blocks', 'desktop.blocks'],
             'touch-phone': ['common.blocks', 'touch.blocks', 'touch-phone.blocks'],
@@ -73,8 +74,8 @@ touch-pad.blocks/    # уровень для тач-фонов
                 ]);
 
                 nodeConfig.addTargets(['?.css', '?.js']);
-            }
-        }
+            });
+        });
     };
     ```
 6. Запустить сборку в консоли:
